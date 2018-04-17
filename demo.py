@@ -1,6 +1,7 @@
 import ed
 import multiprocessing as mp
-import functools
+import logging
+
 method_names = [
     'lcs',
     'levenshtein',
@@ -52,31 +53,31 @@ def sm(name, top_n=50):
     processes = []
     parent_connections = []
 
-    def worker(method_name, method, conn):
-        print("worker starts")
-        result = (method_name, [method(name, n) for n in names])
+    # def worker(method_name, method, conn):
+    #     print("worker starts")
+    #     result = (method_name, [method(name, n) for n in names])
+    #
+    #     print("worker finishes work")
+    #     conn.send([result])
+    #     conn.close()
+    #
+    #     print("worker finishes sending")
 
-        print("worker finishes work")
-        conn.send([result])
-        conn.close()
-
-        print("worker finishes sending")
-
-    for method_name, method in zip(method_names, methods):
-        parent_conn, child_conn = mp.Pipe()
-        parent_connections.append(parent_conn)
-        process = mp.Process(target=worker, args=(method_name, method, child_conn))
-        processes.append(process)
-        process.start()
+    #for method_name, method in zip(method_names, methods):
+        #parent_conn, child_conn = mp.Pipe()
+        #parent_connections.append(parent_conn)
+        #process = mp.Process(target=worker, args=(method_name, method, child_conn))
+        #processes.append(process)
+        #process.start()
 
     # cause for deadlock
     # for process in processes:
     #     process.join()
 
-    for parent_conn in parent_connections:
-        method_name, values = parent_conn.recv()[0]
-        parent_conn.close()
-        similarities[method_name] = values
+    # for parent_conn in parent_connections:
+    #     method_name, values = parent_conn.recv()[0]
+    #     parent_conn.close()
+    #     similarities[method_name] = values
 
     similarities['double_meta'] = list(zip(similarities['double_meta'], similarities["dlevenshtein"]))
 
