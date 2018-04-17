@@ -62,8 +62,6 @@ def handler(event, context):
     return {
        "statusCode": 200,
        "headers": {
-           # "Access-Control-Allow-Headers": "content-type",
-           # "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
            "Access-Control-Allow-Origin": "*"
        },
        "body": json.dumps(result)
