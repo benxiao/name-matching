@@ -3,9 +3,9 @@ from chalice import Chalice
 app = Chalice(app_name='storm-name-matching-ec2')
 
 
-@app.route('/')
-def index():
-    return {'hello': 'world'}
+@app.route('/match/{name}')
+def index(name):
+    return {'hello': name}
 
 
 # The view function above will return {"hello": "world"}
