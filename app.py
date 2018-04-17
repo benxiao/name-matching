@@ -7,14 +7,4 @@ app = Chalice(app_name='storm-name-matching-ec2')
 
 @app.route('/match/{name}')
 def index(name):
-    try:
-        result = demo.sm(name, top_n=30)
-        return {
-            "statusCode": 200,
-            "headers": {
-                "Access-Control-Allow-Origin": "*"
-            },
-            "body": json.dumps(result)
-        }
-    except Exception as e:
-        return { "error": str(e) }
+    return {"name": name}
