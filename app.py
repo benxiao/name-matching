@@ -1,10 +1,14 @@
 from chalice import Chalice
 import json
-from chalicelib.demo import sm
+import logging
+
+import chalicelib.demo as demo
 
 app = Chalice(app_name='storm-name-matching-ec2')
-
+app.log.setLevel(logging.DEBUG)
 
 @app.route('/match/{name}')
 def index(name):
-    return sm(name)
+    demo.username = name
+    logger = app.log
+    return demo.sm(logger, name)

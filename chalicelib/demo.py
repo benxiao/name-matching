@@ -3,6 +3,10 @@ from . import data
 import multiprocessing as mp
 import logging
 from functools import partial
+
+
+username = "Ran"
+
 method_names = [
     'lcs',
     'levenshtein',
@@ -11,14 +15,37 @@ method_names = [
     'double_meta'
 ]
 
+def lcs(x):
+    return ed.lcs_sim(username, x)
+
+def levenshtein(x):
+    return ed.levenshtein_sim(username, x)
+
+def dlevenshtein(x):
+    return ed.damerau_levenshtein_sim(username, x)
+
+def soundex(x):
+    return ed.soundex_sim(username, x)
+
+def double_meta(x):
+    return ed.double_metaphone_sim(username, x)
+
+
 methods = [
-    ed.lcs_sim,
-    ed.levenshtein_sim,
-    ed.damerau_levenshtein_sim,
-    ed.soundex_sim,
-    ed.double_metaphone_sim
+    lcs,
+    levenshtein,
+    dlevenshtein,
+    soundex,
+    double_meta
 ]
 
+
+class FakeLogger:
+    def __init__(self):
+        pass
+
+    def debug(self, *args):
+        pass
 
 def top(lst, indexes, n=20):
     result = []
@@ -44,45 +71,19 @@ def read_csv(filename, sep=','):
     return result
 
 
-def sm(name, top_n=50):
+
+def sm(logger, name, top_n=50):
+    logger.debug("start...")
     pool = mp.Pool(4)
     names = [k for k in data.names]
-    counts = [v for _,v in data.names.items()]
+    counts = [v for _, v in data.names.items()]
     similarities = {}
-    # for m in method_names:
-    #     similarities[m] = None
-    processes = []
-    parent_connections = []
-
-    def worker(method_name, method, conn):
-        print("worker starts")
-        result = (method_name, [method(name, n) for n in names])
-
-        print("worker finishes work")
-        conn.send([result])
-        conn.close()
-
-        print("worker finishes sending")
-
-
+    logger.debug("finish reading input")
     for method_name, method in zip(method_names, methods):
-        similarities[method_name] = pool.map(partial(method, name), names)
 
-    # for method_name, method in zip(method_names, methods):
-    #     parent_conn, child_conn = mp.Pipe()
-    #     parent_connections.append(parent_conn)
-    #     process = mp.Process(target=worker, args=(method_name, method, child_conn))
-    #     processes.append(process)
-    #     process.start()
-    #
-    # # cause for deadlock
-    # # for process in processes:
-    # #     process.join()
-    #
-    # for parent_conn in parent_connections:
-    #     method_name, values = parent_conn.recv()[0]
-    #     parent_conn.close()
-    #     similarities[method_name] = values
+        similarities[method_name] = pool.map(method, names)
+    logger.debug("finish computing-heavy taskes")
+
 
     similarities['double_meta'] = list(zip(similarities['double_meta'], similarities["dlevenshtein"]))
 
@@ -99,7 +100,8 @@ if __name__ == '__main__':
     import time
 
     start = time.time()
+    fl = FakeLogger()
     NAME = "Cathlaen"
     N = 100
-    print(sm(NAME, N))
+    print(sm(fl, NAME, N))
     print(time.time() - start, "s", sep="")
