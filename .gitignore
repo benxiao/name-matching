@@ -3,3 +3,4 @@
 venv/*
 vendor/*
 .idea/*
+__pycache__/*

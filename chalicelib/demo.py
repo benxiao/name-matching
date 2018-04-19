@@ -1,4 +1,5 @@
-import ed
+from . import ed
+from . import data
 import multiprocessing as mp
 import logging
 
@@ -44,40 +45,39 @@ def read_csv(filename, sep=','):
 
 
 def sm(name, top_n=50):
-    data = read_csv("unique_names_with_count.csv")
-    names = [r[0] for r in data]
-    counts = [r[1] for r in data]
+    names = [k for k in data.names]
+    counts = [v for _,v in data.names.items()]
     similarities = {}
     # for m in method_names:
     #     similarities[m] = None
     processes = []
     parent_connections = []
 
-    # def worker(method_name, method, conn):
-    #     print("worker starts")
-    #     result = (method_name, [method(name, n) for n in names])
-    #
-    #     print("worker finishes work")
-    #     conn.send([result])
-    #     conn.close()
-    #
-    #     print("worker finishes sending")
+    def worker(method_name, method, conn):
+        print("worker starts")
+        result = (method_name, [method(name, n) for n in names])
 
-    #for method_name, method in zip(method_names, methods):
-        #parent_conn, child_conn = mp.Pipe()
-        #parent_connections.append(parent_conn)
-        #process = mp.Process(target=worker, args=(method_name, method, child_conn))
-        #processes.append(process)
-        #process.start()
+        print("worker finishes work")
+        conn.send([result])
+        conn.close()
+
+        print("worker finishes sending")
+
+    for method_name, method in zip(method_names, methods):
+        parent_conn, child_conn = mp.Pipe()
+        parent_connections.append(parent_conn)
+        process = mp.Process(target=worker, args=(method_name, method, child_conn))
+        processes.append(process)
+        process.start()
 
     # cause for deadlock
     # for process in processes:
     #     process.join()
 
-    # for parent_conn in parent_connections:
-    #     method_name, values = parent_conn.recv()[0]
-    #     parent_conn.close()
-    #     similarities[method_name] = values
+    for parent_conn in parent_connections:
+        method_name, values = parent_conn.recv()[0]
+        parent_conn.close()
+        similarities[method_name] = values
 
     similarities['double_meta'] = list(zip(similarities['double_meta'], similarities["dlevenshtein"]))
 
@@ -92,8 +92,9 @@ def sm(name, top_n=50):
 
 if __name__ == '__main__':
     import time
+
     start = time.time()
     NAME = "Cathlaen"
     N = 100
     print(sm(NAME, N))
-    print(time.time()-start,"s", sep="")
+    print(time.time() - start, "s", sep="")
