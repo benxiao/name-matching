@@ -2,7 +2,7 @@ from . import ed
 from . import data
 import multiprocessing as mp
 import logging
-
+from functools import partial
 method_names = [
     'lcs',
     'levenshtein',
@@ -45,6 +45,7 @@ def read_csv(filename, sep=','):
 
 
 def sm(name, top_n=50):
+    pool = mp.Pool(4)
     names = [k for k in data.names]
     counts = [v for _,v in data.names.items()]
     similarities = {}
@@ -63,21 +64,25 @@ def sm(name, top_n=50):
 
         print("worker finishes sending")
 
+
     for method_name, method in zip(method_names, methods):
-        parent_conn, child_conn = mp.Pipe()
-        parent_connections.append(parent_conn)
-        process = mp.Process(target=worker, args=(method_name, method, child_conn))
-        processes.append(process)
-        process.start()
+        similarities[method_name] = pool.map(partial(method, name), names)
 
-    # cause for deadlock
-    # for process in processes:
-    #     process.join()
-
-    for parent_conn in parent_connections:
-        method_name, values = parent_conn.recv()[0]
-        parent_conn.close()
-        similarities[method_name] = values
+    # for method_name, method in zip(method_names, methods):
+    #     parent_conn, child_conn = mp.Pipe()
+    #     parent_connections.append(parent_conn)
+    #     process = mp.Process(target=worker, args=(method_name, method, child_conn))
+    #     processes.append(process)
+    #     process.start()
+    #
+    # # cause for deadlock
+    # # for process in processes:
+    # #     process.join()
+    #
+    # for parent_conn in parent_connections:
+    #     method_name, values = parent_conn.recv()[0]
+    #     parent_conn.close()
+    #     similarities[method_name] = values
 
     similarities['double_meta'] = list(zip(similarities['double_meta'], similarities["dlevenshtein"]))
 
